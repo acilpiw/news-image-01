@@ -8,10 +8,19 @@ file name is fixed by the competition, the content is a whole JPEG under
 the same bytes every run.
 """
 
+import hashlib
 import os
 import shutil
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def _sha256(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def main():
@@ -20,8 +29,10 @@ def main():
     src = os.path.join(HERE, "image.jpg")
     dst = os.path.join(out_dir, "entry.png")
     shutil.copyfile(src, dst)
-    # Guard against a truncated copy: the entry must be the whole image.
+    # Guard against a truncated copy: the entry must be the whole image,
+    # byte for byte, not just the same size.
     assert os.path.getsize(dst) == os.path.getsize(src), "truncated copy"
+    assert _sha256(dst) == _sha256(src), "copy differs from source"
 
 
 if __name__ == "__main__":
